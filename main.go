@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/txthinking/runnergroup"
 	"github.com/txthinking/socks5"
@@ -16,8 +18,28 @@ import (
 	"socks5-simulation/simulation"
 )
 
-func socks5_server() {
-	log.Println("Socks5 simulation:")
+func httpServer(g *runnergroup.RunnerGroup) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		simulation.EnableDelay = !simulation.EnableDelay
+		simulation.EnableLoss = !simulation.EnableLoss
+		fmt.Fprintf(w, "Hello World!")
+	})
+	srv := &http.Server{
+		Addr:    "0.0.0.0:8080",
+		Handler: http.DefaultServeMux,
+	}
+	// Create a context with a 5-second timeout for graceful shutdown.
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	g.Add(&runnergroup.Runner{
+		Start: func() error {
+			return srv.ListenAndServe()
+		},
+		Stop: func() error {
+			// Shutdown the HTTP server gracefully.
+			return srv.Shutdown(ctx)
+		},
+	})
 }
 
 func main() {
@@ -108,6 +130,8 @@ func main() {
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
+	// http server
+	httpServer(g)
 	if len(g.Runners) == 0 {
 		return
 	}

@@ -14,6 +14,9 @@ import (
 var delayMin = 1   // min delay, unit is ms, >= 1
 var delayMax = 300 // max delay, unit is ms, >= delayMin
 
+var EnableDelay = false // enable delay, default is false
+var EnableLoss = false  // enable packet loss, default is false
+
 type SimulationHandle struct {
 	socks5.DefaultHandle
 	inner *socks5.DefaultHandle
@@ -24,6 +27,9 @@ type SimulationHandle struct {
 // }
 
 func (h *SimulationHandle) randSleep(bound string) {
+	if !EnableDelay {
+		return
+	}
 	// Generate a random delay between 20 and 300 milliseconds.
 	min := math.Max(1, float64(delayMin))
 	max := math.Max(min, float64(delayMax)-min)
@@ -69,6 +75,7 @@ func (h *SimulationHandle) TCPHandle(s *socks5.Server, upstream *net.TCPConn, r 
 		// outbound: read from upstream and write to client
 		var bf [1024 * 2]byte
 		for {
+			log.Printf("[TCPHandle]: EnableLoss=%v, EnableDelay=%v\n", EnableLoss, EnableDelay)
 			if s.TCPTimeout != 0 {
 				if err := upstream.SetDeadline(time.Now().Add(time.Duration(s.TCPTimeout) * time.Second)); err != nil {
 					return nil
@@ -79,6 +86,13 @@ func (h *SimulationHandle) TCPHandle(s *socks5.Server, upstream *net.TCPConn, r 
 				return nil
 			}
 			log.Printf("[TCPHandle]: outbound Read() len=%d\n", i)
+			ns := time.Now().Nanosecond()
+			if EnableLoss && ns/1000%10 == 1 {
+				// simulate network packet loss, precent is 1/10(10%)
+				copy(bf[:], []byte{})
+				log.Printf("[TCPHandle]: outbound packet loss, len=%d, cap=%d, ns=%d\n", len(bf), cap(bf), ns)
+				return nil
+			}
 			h.randSleep("outbound") // simulate network outbound delay
 			n, err := client.Write(bf[0:i])
 			if err != nil {
