@@ -12,6 +12,8 @@ import (
 	"github.com/txthinking/runnergroup"
 	"github.com/txthinking/socks5"
 	"github.com/urfave/cli/v3"
+
+	"socks5-simulation/simulation"
 )
 
 func socks5_server() {
@@ -19,6 +21,7 @@ func socks5_server() {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	g := runnergroup.New()
 	cmd := cli.Command{
 		Name:                  "socks5-simulation",
@@ -77,14 +80,14 @@ func main() {
 			password := cmd.String("password")
 			tcpTimeout := int(cmd.Int("tcpTimeout"))
 			udpTimeout := int(cmd.Int("udpTimeout"))
-			s5, err := socks5.NewClassicServer(listen, ip, username, password, tcpTimeout, udpTimeout)
+			s5, err := simulation.NewSocks5Server(listen, ip, username, password, tcpTimeout, udpTimeout)
 			if err != nil {
 				return err
 			}
 			s5.LimitUDP = cmd.Bool("limitUDP")
 			g.Add(&runnergroup.Runner{
 				Start: func() error {
-					return s5.ListenAndServe(nil)
+					return s5.ListenAndServe()
 				},
 				Stop: func() error {
 					return s5.Shutdown()
