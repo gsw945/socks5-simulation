@@ -3,11 +3,16 @@ package simulation
 import (
 	"io"
 	"log"
+	"math"
+	"math/rand"
 	"net"
 	"time"
 
 	"github.com/txthinking/socks5"
 )
+
+var delayMin = 1
+var delayMax = 120
 
 type SimulationHandle struct {
 	socks5.DefaultHandle
@@ -18,9 +23,21 @@ type SimulationHandle struct {
 // 	return h.inner.TCPHandle(s, c, r)
 // }
 
+func (h *SimulationHandle) randSleep() {
+	// Generate a random delay between 20 and 300 milliseconds.
+	min := math.Max(1, float64(delayMin))
+	max := math.Max(min, float64(delayMax)-min)
+	delay := int(min) + rand.Intn(int(max))
+	log.Printf("[randSleep]: delay=%dms\n", delay)
+	// Send the current time to the channel after the delay.
+	time.Sleep(time.Duration(delay) * time.Millisecond)
+}
+
 // ref: https://github.com/txthinking/socks5/blob/master/server.go#L323
 // TCPHandle auto handle request. You may prefer to do yourself.
 func (h *SimulationHandle) TCPHandle(s *socks5.Server, c *net.TCPConn, r *socks5.Request) error {
+	// Create a random number generator.
+	rand.Seed(time.Now().UnixNano())
 	if r.Cmd == socks5.CmdConnect {
 		rc, err := r.Connect(c)
 		if err != nil {
@@ -39,6 +56,8 @@ func (h *SimulationHandle) TCPHandle(s *socks5.Server, c *net.TCPConn, r *socks5
 				if err != nil {
 					return
 				}
+				log.Printf("[TCPHandle]: rc.Read(): %d\n", i)
+				h.randSleep()
 				if _, err := c.Write(bf[0:i]); err != nil {
 					return
 				}
