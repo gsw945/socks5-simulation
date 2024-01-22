@@ -59,9 +59,16 @@ go build -o socks5-simulation main.go
 - https://github.com/basil00/Divert
 - https://github.com/yanlinLiu0424/godivert
 - [Windivert ProcessId at NETWORK layer](https://stackoverflow.com/questions/58449491/windivert-processid-at-network-layer)
+- [name of process in filter #169](https://github.com/basil00/Divert/issues/169#issuecomment-478176492)
+- https://github.com/basil00/TorWall/blob/master/redirect.c
 
 ### 计划参考
 - [proxychains4 with Go lang #199](https://github.com/rofl0r/proxychains-ng/issues/199)
 - https://github.com/hmgle/graftcp
 - https://github.com/mzz2017/gg
 - [天朝局域网内go get的正确姿势](https://blog.scnace.me/post/%E4%B8%BAgo-get%E6%8A%A4%E8%88%AA-/)
+- [WinDivert 2 Rust Wrapper](https://github.com/Rubensei/windivert-rust)
+- https://github.com/dotpcap/sharppcap
+- https://github.com/dotpcap/packetnet
+- https://github.com/xljiulang/WindivertDotnet
+- https://github.com/james-barrow/golang-ipc
